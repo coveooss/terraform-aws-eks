@@ -155,6 +155,14 @@ resource "aws_launch_template" "workers_launch_template" {
     )
   }
 
+  enclave_options {
+    enabled = lookup(
+      var.worker_groups_launch_template[count.index],
+      "enclave_support",
+      local.workers_group_defaults["enclave_support"],
+    )
+  }
+
   image_id = lookup(
     each.value,
     "ami_id",
