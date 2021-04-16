@@ -58,10 +58,9 @@ data "aws_iam_policy_document" "cluster_assume_role_policy" {
 data "template_file" "userdata" {
   for_each = var.create_eks ? local.worker_groups_with_defaults : {}
 
-  template = lookup(
-    each.value,
-    "userdata_template_file",
-    file(
+  template = (each.value.userdata_template_file != ""
+    ? each.value.userdata_template_file
+    : file(
       each.value.platform == "windows"
       ? "${path.module}/templates/userdata_windows.tpl"
       : "${path.module}/templates/userdata.sh.tpl"
@@ -86,10 +85,9 @@ data "template_file" "userdata" {
 data "template_file" "launch_template_userdata" {
   for_each = var.create_eks ? local.worker_groups_launch_template_with_defaults : {}
 
-  template = lookup(
-    each.value,
-    "userdata_template_file",
-    file(
+  template = (each.value.userdata_template_file != ""
+    ? each.value.userdata_template_file
+    : file(
       each.value.platform == "windows"
       ? "${path.module}/templates/userdata_windows.tpl"
       : "${path.module}/templates/userdata.sh.tpl"
@@ -98,14 +96,14 @@ data "template_file" "launch_template_userdata" {
 
   vars = merge(
     {
-      platform            = each.value.platform
-      cluster_name        = coalescelist(aws_eks_cluster.this[*].name, [""])[0]
-      endpoint            = coalescelist(aws_eks_cluster.this[*].endpoint, [""])[0]
-      cluster_auth_base64 = coalescelist(aws_eks_cluster.this[*].certificate_authority[0].data, [""])[0]
-      pre_userdata = each.value.pre_userdata
-      additional_userdata = each.value.additional_userdata
+      platform             = each.value.platform
+      cluster_name         = coalescelist(aws_eks_cluster.this[*].name, [""])[0]
+      endpoint             = coalescelist(aws_eks_cluster.this[*].endpoint, [""])[0]
+      cluster_auth_base64  = coalescelist(aws_eks_cluster.this[*].certificate_authority[0].data, [""])[0]
+      pre_userdata         = each.value.pre_userdata
+      additional_userdata  = each.value.additional_userdata
       bootstrap_extra_args = each.value.bootstrap_extra_args
-      kubelet_extra_args = each.value.kubelet_extra_args
+      kubelet_extra_args   = each.value.kubelet_extra_args
     },
     each.value.userdata_template_extra_args
   )
